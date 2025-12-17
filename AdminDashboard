@@ -1,0 +1,98 @@
+package org.example;
+
+import javax.swing.*;
+import java.awt.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+
+public class AdminDashboard {
+
+    public AdminDashboard() {
+        JFrame frame = new JFrame("Admin Dashboard");
+        frame.setSize(600, 400);
+        frame.setLayout(new BorderLayout());
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        // ===== TOP BAR =====
+        JPanel topBar = new JPanel(new BorderLayout());
+        topBar.setBorder(BorderFactory.createEmptyBorder(8, 10, 8, 10));
+
+        JLabel profile = new JLabel("👨‍✈️ Admin");
+        profile.setFont(new Font("Segoe UI", Font.BOLD, 14));
+
+        JButton logout = new JButton("Logout");
+        logout.addActionListener(e -> {
+            frame.dispose();
+            new LoginGUI();
+        });
+
+        topBar.add(profile, BorderLayout.WEST);
+        topBar.add(logout, BorderLayout.EAST);
+        frame.add(topBar, BorderLayout.NORTH);
+
+        // ===== CENTER BUTTONS =====
+        JPanel center = new JPanel(new GridLayout(2, 1, 15, 15));
+        center.setBorder(BorderFactory.createEmptyBorder(40, 160, 40, 160));
+
+        JButton viewBtn = new JButton("View Flights");
+        JButton updateBtn = new JButton("Update Flight");
+
+        center.add(viewBtn);
+        center.add(updateBtn);
+        frame.add(center, BorderLayout.CENTER);
+
+        // ===== VIEW FLIGHTS =====
+        viewBtn.addActionListener(e -> {
+            try {
+                JTextArea area =
+                        new JTextArea(new FlightService().viewFlightsGUI());
+                area.setEditable(false);
+                JOptionPane.showMessageDialog(
+                        frame, new JScrollPane(area),
+                        "Flight Schedule",
+                        JOptionPane.INFORMATION_MESSAGE
+                );
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(frame, ex.getMessage());
+            }
+        });
+
+        // ===== UPDATE FLIGHT =====
+        updateBtn.addActionListener(e -> {
+            try {
+                JTextField id = new JTextField();
+                JTextField date = new JTextField();
+                JTextField seats = new JTextField();
+
+                Object[] fields = {
+                        "Flight ID:", id,
+                        "New Date (YYYY-MM-DD):", date,
+                        "New Seat Count:", seats
+                };
+
+                int opt = JOptionPane.showConfirmDialog(
+                        frame, fields,
+                        "Update Flight",
+                        JOptionPane.OK_CANCEL_OPTION
+                );
+
+                if (opt == JOptionPane.OK_OPTION) {
+                    Connection conn = DBConnection.getConnection();
+                    PreparedStatement ps = conn.prepareStatement(
+                            "UPDATE flights SET flight_date=?, seats=? WHERE id=?");
+                    ps.setString(1, date.getText());
+                    ps.setInt(2, Integer.parseInt(seats.getText()));
+                    ps.setInt(3, Integer.parseInt(id.getText()));
+                    ps.executeUpdate();
+
+                    JOptionPane.showMessageDialog(frame, "Flight updated successfully");
+                }
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(frame, ex.getMessage());
+            }
+        });
+
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
+    }
+}
