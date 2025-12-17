@@ -1,0 +1,131 @@
+package org.example;
+
+import javax.swing.*;
+import java.awt.*;
+
+public class CustomerDashboard {
+
+    public CustomerDashboard() {
+        JFrame frame = new JFrame("Customer Dashboard");
+        frame.setSize(650, 420);
+        frame.setLayout(new BorderLayout());
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        // ===== TOP BAR =====
+        JPanel topBar = new JPanel(new BorderLayout());
+        topBar.setBorder(BorderFactory.createEmptyBorder(8, 10, 8, 10));
+
+        JLabel profile = new JLabel("👤 Customer");
+        profile.setFont(new Font("Segoe UI", Font.BOLD, 14));
+
+        JButton logout = new JButton("Logout");
+        logout.addActionListener(e -> {
+            frame.dispose();
+            new LoginGUI();
+        });
+
+        topBar.add(profile, BorderLayout.WEST);
+        topBar.add(logout, BorderLayout.EAST);
+        frame.add(topBar, BorderLayout.NORTH);
+
+        // ===== CENTER BUTTONS =====
+        JPanel center = new JPanel(new GridLayout(2, 1, 15, 15));
+        center.setBorder(BorderFactory.createEmptyBorder(40, 160, 40, 160));
+
+        JButton viewBtn = new JButton("View Flights");
+        JButton bookBtn = new JButton("Book Flight");
+
+        center.add(viewBtn);
+        center.add(bookBtn);
+        frame.add(center, BorderLayout.CENTER);
+
+        // ===== VIEW FLIGHTS (READ-ONLY) =====
+        viewBtn.addActionListener(e -> {
+            try {
+                JTextArea area =
+                        new JTextArea(new FlightService().viewFlightsGUI());
+                area.setEditable(false);
+                JOptionPane.showMessageDialog(
+                        frame, new JScrollPane(area),
+                        "Available Flights",
+                        JOptionPane.INFORMATION_MESSAGE
+                );
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(frame, ex.getMessage());
+            }
+        });
+
+        // ===== BOOK FLIGHT =====
+        bookBtn.addActionListener(e -> {
+            try {
+                FlightService service = new FlightService();
+                JList<String> list =
+                        new JList<>(service.getFlightsForSelection());
+                list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+                list.addListSelectionListener(ev -> {
+                    if (!ev.getValueIsAdjusting()) {
+                        try {
+                            String selected = list.getSelectedValue();
+                            int flightId =
+                                    Integer.parseInt(selected.split("\\|")[0].trim());
+                            startBooking(service, flightId);
+                        } catch (Exception ex) {
+                            JOptionPane.showMessageDialog(frame, ex.getMessage());
+                        }
+                    }
+                });
+
+                JOptionPane.showMessageDialog(
+                        frame, new JScrollPane(list),
+                        "Select Flight to Book",
+                        JOptionPane.INFORMATION_MESSAGE
+                );
+
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(frame, ex.getMessage());
+            }
+        });
+
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
+    }
+
+    // ===== BOOKING FORM =====
+    private void startBooking(FlightService service, int flightId) throws Exception {
+
+        JTextField name = new JTextField();
+        JTextField age = new JTextField();
+        JTextField contact = new JTextField();
+        JComboBox<String> gender =
+                new JComboBox<>(new String[]{"Male", "Female", "Other"});
+
+        Object[] fields = {
+                "Name:", name,
+                "Age:", age,
+                "Gender:", gender,
+                "Contact:", contact
+        };
+
+        int opt = JOptionPane.showConfirmDialog(
+                null, fields,
+                "Passenger Details",
+                JOptionPane.OK_CANCEL_OPTION
+        );
+
+        if (opt == JOptionPane.OK_OPTION) {
+            service.bookTicketGUI(
+                    flightId,
+                    name.getText(),
+                    Integer.parseInt(age.getText()),
+                    gender.getSelectedItem().toString(),
+                    contact.getText()
+            );
+
+            JOptionPane.showMessageDialog(
+                    null,
+                    "Ticket Booked Successfully!\nSeat reduced in database"
+            );
+        }
+    }
+}
