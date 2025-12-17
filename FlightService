@@ -1,0 +1,65 @@
+package org.example;
+
+import javax.swing.*;
+import java.sql.*;
+
+public class FlightService {
+
+    private final Connection conn = DBConnection.getConnection();
+
+    public String viewFlightsGUI() throws Exception {
+        ResultSet rs = conn.createStatement()
+                .executeQuery("SELECT * FROM flights");
+        StringBuilder sb = new StringBuilder();
+
+        while (rs.next()) {
+            sb.append("Flight ID: ").append(rs.getInt("id")).append("\n")
+                    .append("Route: ").append(rs.getString("source"))
+                    .append(" → ").append(rs.getString("destination")).append("\n")
+                    .append("Date: ").append(rs.getDate("flight_date")).append("\n")
+                    .append("Seats: ").append(rs.getInt("seats"))
+                    .append("\n----------------------\n");
+        }
+        return sb.toString();
+    }
+
+    public DefaultListModel<String> getFlightsForSelection() throws Exception {
+        ResultSet rs = conn.createStatement()
+                .executeQuery("SELECT * FROM flights");
+        DefaultListModel<String> model = new DefaultListModel<>();
+
+        while (rs.next()) {
+            model.addElement(
+                    rs.getInt("id") + " | " +
+                            rs.getString("source") + " → " +
+                            rs.getString("destination") +
+                            " | Date: " + rs.getDate("flight_date") +
+                            " | Seats: " + rs.getInt("seats")
+            );
+        }
+        return model;
+    }
+
+    public void bookTicketGUI(
+            int flightId, String name,
+            int age, String gender, String contact) throws Exception {
+
+        if (age < 1 || age > 120)
+            throw new Exception("Invalid age");
+        if (!contact.matches("\\d{10}"))
+            throw new Exception("Contact must be 10 digits");
+
+        PreparedStatement check = conn.prepareStatement(
+                "SELECT seats FROM flights WHERE id=?");
+        check.setInt(1, flightId);
+        ResultSet rs = check.executeQuery();
+
+        if (rs.next() && rs.getInt("seats") > 0) {
+            conn.prepareStatement(
+                            "UPDATE flights SET seats = seats - 1 WHERE id=" + flightId)
+                    .executeUpdate();
+        } else {
+            throw new Exception("No seats available");
+        }
+    }
+}
