@@ -1,0 +1,37 @@
+package org.example;
+
+import javax.swing.*;
+import java.awt.*;
+
+public class AirlineGUI {
+
+    private final FlightService service = new FlightService();
+
+    public AirlineGUI() {
+        JFrame frame = new JFrame("Airline System (Read Only)");
+        frame.setSize(500, 350);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setLayout(new BorderLayout());
+
+        JButton viewFlights = new JButton("View Flights");
+
+        viewFlights.addActionListener(e -> {
+            try {
+                JTextArea area = new JTextArea(service.viewFlightsGUI());
+                area.setEditable(false);
+                JOptionPane.showMessageDialog(
+                        frame,
+                        new JScrollPane(area),
+                        "Available Flights",
+                        JOptionPane.INFORMATION_MESSAGE
+                );
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(frame, ex.getMessage());
+            }
+        });
+
+        frame.add(viewFlights, BorderLayout.CENTER);
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
+    }
+}
