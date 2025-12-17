@@ -1,0 +1,13 @@
+package org.example;
+
+import java.io.FileWriter;
+
+public class TicketPDF {
+    public static void generate(String name, String seat) {
+        try {
+            FileWriter fw = new FileWriter("Ticket_" + name + ".txt");
+            fw.write("Passenger: " + name + "\nSeat: " + seat);
+            fw.close();
+        } catch (Exception ignored) {}
+    }
+}
